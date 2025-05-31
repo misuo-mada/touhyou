@@ -1,29 +1,57 @@
-
-<!-- result.html - 結果画面 -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>投票結果</title>
   <style>
-    body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 40px; }
-    .bar { background: crimson; margin: 10px auto; height: 30px; color: white; line-height: 30px; }
+    body {
+      background: #000;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+    .bar {
+      margin: 10px auto;
+      height: 30px;
+      line-height: 30px;
+      font-weight: bold;
+      border-radius: 6px;
+      transition: width 1s ease;
+      color: #000;
+    }
   </style>
 </head>
 <body>
   <h2>投票結果</h2>
   <div id="resultContainer"></div>
+
   <script>
     const results = JSON.parse(sessionStorage.getItem("results"));
     const container = document.getElementById("resultContainer");
+
+    const total = Object.values(results).reduce((a, b) => a + b, 0);
+    const maxVotes = Math.max(...Object.values(results));
+    const winner = Object.entries(results).find(([_, v]) => v === maxVotes)?.[0];
+
+    const title = document.createElement("h3");
+    title.innerHTML = `🎉 最多得票者<span style="color:gold">${winner}</span>（${maxVotes}票）`;
+    container.appendChild(title);
+
     for (const [name, count] of Object.entries(results)) {
       const bar = document.createElement("div");
       bar.textContent = `${name}：${count}票`;
       bar.className = "bar";
-      bar.style.width = `${count * 60}px`;
+      bar.style.width = `${Math.max(count * 50, 100)}px`;
+      bar.style.backgroundColor = count === maxVotes ? "gold" : "crimson";
       container.appendChild(bar);
     }
+
+    const totalVotes = document.createElement("p");
+    totalVotes.textContent = `総投票数：${total}票`;
+    totalVotes.style.marginTop = "20px";
+    container.appendChild(totalVotes);
   </script>
 </body>
 </html>

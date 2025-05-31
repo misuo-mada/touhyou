@@ -1,24 +1,61 @@
-<!-- admin.html - 管理者画面 -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>管理者パネル</title>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    body { background: #222; color: white; font-family: sans-serif; padding: 20px; text-align: center; }
-    input, button { font-size: 16px; margin: 5px; padding: 8px; }
+    body {
+      background: #222;
+      color: white;
+      font-family: 'Noto Sans JP', sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    input, button {
+      font-size: 1rem;
+      padding: 10px;
+      margin: 10px;
+      border-radius: 6px;
+      border: none;
+    }
+    button {
+      background: crimson;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: darkred;
+    }
+    #targetList div {
+      margin: 5px;
+      font-size: 1.2rem;
+    }
+    #qrcode {
+      margin: 20px auto;
+      width: fit-content;
+    }
   </style>
 </head>
 <body>
   <h1>管理者パネル</h1>
+
   <input id="targetName" placeholder="投票対象者の名前を追加" />
-  <button onclick="addTarget()">追加</button>
-  <ul id="targetList"></ul>
+  <button onclick="addTarget()">＋追加</button>
+
+  <div id="targetList"></div>
+
+  <p>
+    制限時間（秒）:
+    <input id="timeLimit" type="number" value="30" min="10" max="300" />
+  </p>
+
   <button onclick="startVote()">✅ 投票開始</button>
-  <h3>QRコード</h3>
+  <button onclick="showResults()">📊 結果を表示</button>
+
+  <h3>投票ページ（QRコード）</h3>
   <div id="qrcode"></div>
   <p id="urlText" style="margin-top:10px;"></p>
 
@@ -30,19 +67,28 @@
       const name = document.getElementById('targetName').value;
       if (name && !targets.includes(name)) {
         targets.push(name);
-        const li = document.createElement('li');
-        li.textContent = name;
-        document.getElementById('targetList').appendChild(li);
+        const entry = document.createElement('div');
+        entry.textContent = name;
+        document.getElementById('targetList').appendChild(entry);
         document.getElementById('targetName').value = '';
       }
     }
 
     function startVote() {
-      socket.emit("startVote", targets);
+      const limit = parseInt(document.getElementById("timeLimit").value);
+      socket.emit("startVote", { targets, limit });
+    }
+
+    function showResults() {
+      socket.emit("requestResult");
     }
 
     const url = location.origin + "/index.html";
-    new QRCode(document.getElementById("qrcode"), url);
+    new QRCode(document.getElementById("qrcode"), {
+      text: url,
+      width: 200,
+      height: 200
+    });
     document.getElementById("urlText").textContent = url;
   </script>
 </body>
