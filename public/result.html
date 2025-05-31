@@ -1,0 +1,28 @@
+<!-- result.html - 結果画面 -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>投票結果</title>
+  <style>
+    body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 40px; }
+    .bar { background: crimson; margin: 10px auto; height: 30px; color: white; line-height: 30px; }
+  </style>
+</head>
+<body>
+  <h2>投票結果</h2>
+  <div id="resultContainer"></div>
+  <script>
+    const results = JSON.parse(sessionStorage.getItem("results"));
+    const container = document.getElementById("resultContainer");
+    for (const [name, count] of Object.entries(results)) {
+      const bar = document.createElement("div");
+      bar.textContent = `${name}：${count}票`;
+      bar.className = "bar";
+      bar.style.width = `${count * 60}px`;
+      container.appendChild(bar);
+    }
+  </script>
+</body>
+</html>
