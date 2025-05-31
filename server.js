@@ -1,5 +1,5 @@
 
-// server.js - Node.js + Socket.IO サーバー
+// server.js
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -12,39 +12,36 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static('public'));
 
-let players = {}; // { socketId: { name, role, avatar, voted } }
-let voteCounts = {}; // { "田中さん": 2, ... }
-let totalVoters = 0;
+let players = {}; // socketId: { name, role, avatar, voted }
+let voteCounts = {}; // { name: count }
+let voteTargets = [];
 
 io.on('connection', (socket) => {
   console.log(`🟢 ${socket.id} connected`);
 
   socket.on('register', ({ name, role, avatar }) => {
     players[socket.id] = { name, role, avatar, voted: false };
-    totalVoters = Object.keys(players).length;
+  });
+
+  socket.on('startVote', (targets) => {
+    voteTargets = targets;
+    voteCounts = {};
+    for (const id in players) players[id].voted = false;
+    io.emit('voteStarted', voteTargets);
   });
 
   socket.on('vote', (target) => {
-    if (!players[socket.id]?.voted) {
+    if (!players[socket.id]?.voted && voteTargets.includes(target)) {
       voteCounts[target] = (voteCounts[target] || 0) + 1;
       players[socket.id].voted = true;
-      io.emit('voteUpdate', voteCounts);
 
       const votedCount = Object.values(players).filter(p => p.voted).length;
-      if (votedCount === totalVoters) {
+      const total = Object.keys(players).length;
+
+      if (votedCount === total) {
         io.emit('showResult', voteCounts);
       }
     }
-  });
-
-  socket.on('startVote', () => {
-    voteCounts = {}; // リセット
-    for (const id in players) players[id].voted = false;
-    io.emit('voteStarted');
-  });
-
-  socket.on('forceEnd', () => {
-    io.emit('showResult', voteCounts);
   });
 
   socket.on('disconnect', () => {
@@ -54,5 +51,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log(`✅ Server running on http://localhost:${PORT}`);
 });

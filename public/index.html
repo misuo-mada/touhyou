@@ -2,18 +2,18 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>投票フェーズ</title>
+  <title>投票画面</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }
+    body { background: #111; color: white; font-family: sans-serif; padding: 20px; }
     button, select, input { font-size: 18px; margin: 10px; padding: 8px; }
   </style>
 </head>
 <body>
-  <h2>名前・役職・アイコンを選択して参加</h2>
-  <input id="name" placeholder="名前" />
+  <h2>名前・役職・アイコンを選んで参加</h2>
+  <input id="name" placeholder="あなたの名前" />
   <select id="role">
     <option value="村人">村人</option>
     <option value="人狼">人狼</option>
@@ -28,32 +28,36 @@
   <button onclick="register()">参加</button>
 
   <div id="voteArea" style="display:none;">
-    <h2>投票先を選んでください</h2>
+    <h2>投票対象を選んでください</h2>
     <div id="options"></div>
     <button onclick="submitVote()">投票</button>
-    <p id="timer">制限時間: <span id="countdown">30</span>秒</p>
+    <p id="timer">制限時間: <span id="countdown">60</span>秒</p>
   </div>
 
   <script>
     const socket = io();
-    const players = ["田中さん", "山田さん", "鈴木さん", "小林さん"];
+    let voteTargets = [];
     let selected = null;
     let countdown = 30;
 
-    function register() {
+function register() {
       const name = document.getElementById('name').value;
       const role = document.getElementById('role').value;
       const avatar = document.getElementById('avatar').value;
-      if (!name) return alert('名前を入力してください');
+      if (!name) return alert("名前を入力してください");
       socket.emit('register', { name, role, avatar });
+      document.getElementById('voteArea').innerHTML = "<p>投票が開始されるのをお待ちください...</p>";
+      document.getElementById('voteArea').style.display = 'block';
     }
+
 
     function renderOptions() {
       const area = document.getElementById('options');
-      players.forEach(p => {
+      area.innerHTML = '';
+      voteTargets.forEach(name => {
         const btn = document.createElement('button');
-        btn.textContent = p;
-        btn.onclick = () => selected = p;
+        btn.textContent = name;
+        btn.onclick = () => selected = name;
         btn.style.display = "block";
         btn.style.margin = "10px";
         area.appendChild(btn);
@@ -61,7 +65,7 @@
     }
 
     function submitVote() {
-      if (!selected) return alert("誰かに投票してください！");
+      if (!selected) return alert("誰かに投票してください");
       socket.emit('vote', selected);
     }
 
@@ -77,7 +81,8 @@
       }, 1000);
     }
 
-    socket.on('voteStarted', () => {
+    socket.on('voteStarted', (targets) => {
+      voteTargets = targets;
       document.getElementById('voteArea').style.display = 'block';
       renderOptions();
       startTimer();

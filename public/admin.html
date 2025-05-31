@@ -1,34 +1,49 @@
-
 <!-- admin.html - 管理者画面 -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>管理者パネル</title>
   <script src="/socket.io/socket.io.js"></script>
-  <script src="qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    body { background: #222; color: #fff; text-align: center; padding: 20px; }
-    button { margin: 10px; padding: 10px 20px; font-size: 18px; }
+    body { background: #222; color: white; font-family: sans-serif; padding: 20px; text-align: center; }
+    input, button { font-size: 16px; margin: 5px; padding: 8px; }
   </style>
 </head>
 <body>
-  <h1>👤 管理者パネル</h1>
-  <button onclick="startVote()">投票を開始</button>
-  <button onclick="forceEnd()">強制終了</button>
-  <h3>QRコード（投票ページ）</h3>
+  <h1>管理者パネル</h1>
+  <input id="targetName" placeholder="投票対象者の名前を追加" />
+  <button onclick="addTarget()">追加</button>
+  <ul id="targetList"></ul>
+  <button onclick="startVote()">✅ 投票開始</button>
+  <h3>QRコード</h3>
   <div id="qrcode"></div>
+  <p id="urlText" style="margin-top:10px;"></p>
+
   <script>
     const socket = io();
+    const targets = [];
+
+    function addTarget() {
+      const name = document.getElementById('targetName').value;
+      if (name && !targets.includes(name)) {
+        targets.push(name);
+        const li = document.createElement('li');
+        li.textContent = name;
+        document.getElementById('targetList').appendChild(li);
+        document.getElementById('targetName').value = '';
+      }
+    }
+
     function startVote() {
-      socket.emit("startVote");
+      socket.emit("startVote", targets);
     }
-    function forceEnd() {
-      socket.emit("forceEnd");
-    }
+
     const url = location.origin + "/index.html";
     new QRCode(document.getElementById("qrcode"), url);
+    document.getElementById("urlText").textContent = url;
   </script>
 </body>
 </html>
